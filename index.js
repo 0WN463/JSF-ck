@@ -8,58 +8,75 @@ const number = n => {
 
 const map = {};
 
-const fromString = s =>s.split('').map(x => {
+const fromString = s => s.split('').map(x => {
   if (!(x in map)) {
     const charCode = x.charCodeAt(0);
-    return `([]+[])[${fromString('constructor')}][${fromString('fromCharCode')}](${number(charCode)})`;
+    return `([]+[])[${str_constructor}][${str_fromCharCode}](${number(charCode)})`;
   }
   return map[x];
 }).join('+');
 
-str_NaN = "(+{}+[])" // NaN
-map.a = `${str_NaN}[${number(1)}]`;
+const updateMap = (map, fkStr) => {
+  [...eval(fkStr)].forEach((c, i) => map[c] = `${fkStr}[${number(i)}]`)
+}
 
-str_object_Object = "({}+[])" // [object Object]
-map.o = `${str_object_Object}[${number(1)}]`;
-map.b = `${str_object_Object}[${number(2)}]`;
-map.e = `${str_object_Object}[${number(4)}]`;
-map.c = `${str_object_Object}[${number(5)}]`;
-map.t = `${str_object_Object}[${number(6)}]`;
-map[' '] = `${str_object_Object}[${number(7)}]`;
+const str_NaN = "(+{}+[])" // NaN
+updateMap(map, str_NaN)
+// important chars: 'a'
 
-str_false = "(![]+[])" // false
-map.f = `${str_false}[${number(0)}]`;
-map.s = `${str_false}[${number(3)}]`;
+const str_object_Object = "({}+[])" // [object Object]
+updateMap(map, str_object_Object)
+// important chars: 'o' 'b' 'e' 'c' 't' ' '
 
-str_true = "(!![]+[])" // true
-map.r = `${str_true}[${number(1)}]`;
-map.u = `${str_true}[${number(2)}]`;
+const str_false = "(![]+[])" // false
+updateMap(map, str_false)
+// important chars: 'f' 's'
 
-str_Infinity =  `((${one}/${zero})+[])` // Infinity
-map.i = `${str_Infinity}[${number(3)}]`;
-map.n = `${str_Infinity}[${number(4)}]`;
+const str_true = "(!![]+[])" // true
+updateMap(map, str_true)
+// important chars: 'r' 'u'
 
-str_String = `((([]+[])[${fromString('constructor')}])+[])` // function String() { [native code] }
+const str_Infinity =  `((${one}/${zero})+[])` // Infinity
+updateMap(map, str_Infinity)
+// important chars: 'i' 'n'
+
+// Now we have access to constructor
+const str_constructor = fromString('constructor')
+
+const str_String = `((([]+[])[${str_constructor}])+[])` // function String() { [native code] }
 map.S = `${str_String}[${number(9)}]`;
 map.g = `${str_String}[${number(14)}]`;
+// important chars: 'S' 'g'
 
-str_RegExp = `(((/-/)[${fromString('constructor')}])+[])` // function RegExp() { [native code] }
+// Now we have access to toString
+const str_toString = fromString('toString')
+
+const str_RegExp = `(((/-/)[${str_constructor}])+[])` // function RegExp() { [native code] }
 map.p = `${str_RegExp}[${number(14)}]`;
-
-str_backslash = "(/\\\\/+[])" // \
-map['\\'] = `${str_backslash}[${number(1)}]`;
+// important chars: 'p'
 
 // decimal 13 = hex d
 // likewise, toString(radix) allows us to use up to radix=36, which generates all lowercase letters
-map.d = `(${number(13)})[${fromString('toString')}](${number(14)})`;
-map.h = `(${number(17)})[${fromString('toString')}](${number(18)})`;
-map.m = `(${number(22)})[${fromString('toString')}](${number(23)})`;
 
-str_func_constructor = `(()=>{})[${fromString('constructor')}]`
-str_func_escape = `${str_func_constructor}(${fromString('return escape')})()` // build-in string escape function
-str_5C = `(${str_func_escape}(${map['\\']}))` // %5C
+for (let i = 0; i < 26; ++i) {
+  const letter = String.fromCharCode(i + 'a'.charCodeAt())
+  if (!(letter in map)) 
+    map[letter] = `(${number(10+i)})[${str_toString}](${number(11+i)})`;
+}
+
+const str_func_constructor = `(()=>{})[${str_constructor}]` // function constructor accepts a string and turns it into a function
+const str_func_escape = `${str_func_constructor}(${fromString('return escape')})()` // built-in string escape function
+
+// We want backslash to escape it to get "%5C"
+const str_backslash = "(/\\\\/+[])" // /\\/
+updateMap(map, str_backslash)
+
+const str_5C = `(${str_func_escape}(${map['\\']}))` // %5C
 map.C = `${str_5C}[${number(2)}]`;
 
-const compile = code => `(()=>{})[${fromString('constructor')}](${fromString(code)})()`;
+// Now we have access to fromCharCode, which means we can compile any code
+const str_fromCharCode = fromString('fromCharCode')
+
+const compile = code => `(()=>{})[${str_constructor}](${fromString(code)})()`;
 
 console.log(compile('console.log("Hello world!");'));
