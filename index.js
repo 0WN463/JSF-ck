@@ -17,7 +17,9 @@ const fromString = s => s.split('').map(x => {
 }).join('+');
 
 const updateMap = (map, fkStr) => {
-  [...eval(fkStr)].forEach((c, i) => map[c] = `${fkStr}[${number(i)}]`)
+  const newItems = [...eval(fkStr)].map((c, i) => ({[c]: `${fkStr}[${number(i)}]`}))
+  newItems.reverse()
+  map = Object.assign(map, ...newItems);
 }
 
 const str_NaN = "(+{}+[])" // NaN
@@ -77,6 +79,8 @@ map.C = `${str_5C}[${number(2)}]`;
 // Now we have access to fromCharCode, which means we can compile any code
 const str_fromCharCode = fromString('fromCharCode')
 
-const compile = code => `(()=>{})[${str_constructor}](${fromString(code)})()`;
+const compile = code => `${str_func_constructor}(${fromString(code)})()`;
 
-console.log(compile('console.log("Hello world!");'));
+const input = process.argv[2]
+
+console.log(compile(input));
