@@ -6,8 +6,6 @@ const number = n => {
   return Array.from({length: n}, () => one).join(' + ');
 }
 
-// C
-
 const map = {};
 
 const fromString = s =>s.split('').map(x => {
@@ -18,27 +16,49 @@ const fromString = s =>s.split('').map(x => {
   return map[x];
 }).join('+');
 
-map.a = `(+{}+[])[${number(1)}]`;
-map.b = `({}+[])[${number(2)}]`;
-map.o = `({}+[])[${number(1)}]`;
-map.e = `({}+[])[${number(4)}]`;
-map.c = `({}+[])[${number(5)}]`;
-map.t = `({}+[])[${number(6)}]`;
-map[' '] = `({}+[])[${number(7)}]`;
-map.f = `(![]+[])[${number(0)}]`;
-map.s = `(![]+[])[${number(3)}]`;
-map.r = `(!![]+[])[${number(1)}]`;
-map.u = `(!![]+[])[${number(2)}]`;
-map.i = `((+!![]/+[])+[])[${number(3)}]`;
-map.n = `((+!![]/+[])+[])[${number(4)}]`;
-map.S = `([]+([]+[])[${fromString('constructor')}])[${number(9)}]`;
-map.g = `([]+([]+[])[${fromString('constructor')}])[${number(14)}]`;
-map.p = `([]+(/-/)[${fromString('constructor')}])[${number(14)}]`;
-map['\\'] = `(/\\\\/+[])[${number(1)}]`;
+str_NaN = "(+{}+[])" // NaN
+map.a = `${str_NaN}[${number(1)}]`;
+
+str_object_Object = "({}+[])" // [object Object]
+map.o = `${str_object_Object}[${number(1)}]`;
+map.b = `${str_object_Object}[${number(2)}]`;
+map.e = `${str_object_Object}[${number(4)}]`;
+map.c = `${str_object_Object}[${number(5)}]`;
+map.t = `${str_object_Object}[${number(6)}]`;
+map[' '] = `${str_object_Object}[${number(7)}]`;
+
+str_false = "(![]+[])" // false
+map.f = `${str_false}[${number(0)}]`;
+map.s = `${str_false}[${number(3)}]`;
+
+str_true = "(!![]+[])" // true
+map.r = `${str_true}[${number(1)}]`;
+map.u = `${str_true}[${number(2)}]`;
+
+str_Infinity =  `((${one}/${zero})+[])` // Infinity
+map.i = `${str_Infinity}[${number(3)}]`;
+map.n = `${str_Infinity}[${number(4)}]`;
+
+str_String = `((([]+[])[${fromString('constructor')}])+[])` // function String() { [native code] }
+map.S = `${str_String}[${number(9)}]`;
+map.g = `${str_String}[${number(14)}]`;
+
+str_RegExp = `(((/-/)[${fromString('constructor')}])+[])` // function RegExp() { [native code] }
+map.p = `${str_RegExp}[${number(14)}]`;
+
+str_backslash = "(/\\\\/+[])" // \
+map['\\'] = `${str_backslash}[${number(1)}]`;
+
+// decimal 13 = hex d
+// likewise, toString(radix) allows us to use up to radix=36, which generates all lowercase letters
 map.d = `(${number(13)})[${fromString('toString')}](${number(14)})`;
 map.h = `(${number(17)})[${fromString('toString')}](${number(18)})`;
 map.m = `(${number(22)})[${fromString('toString')}](${number(23)})`;
-map.C = `((()=>{})[${fromString('constructor')}](${fromString('return escape')})()(${map['\\']}))[${number(2)}]`;
+
+str_func_constructor = `(()=>{})[${fromString('constructor')}]`
+str_func_escape = `${str_func_constructor}(${fromString('return escape')})()` // build-in string escape function
+str_5C = `(${str_func_escape}(${map['\\']}))` // %5C
+map.C = `${str_5C}[${number(2)}]`;
 
 const compile = code => `(()=>{})[${fromString('constructor')}](${fromString(code)})()`;
 
